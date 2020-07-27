@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/components/dishes/dishes",
+    "pages/components/take/take"
+  ],
+  "window": {
+    "backgroundColor": "#f4f4f4",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFA500",
+    "navigationBarTitleText": "有鱼有虾",
+    "navigationBarTextStyle": "white"
+  },
+  "sitemapLocation": "sitemap.json"
+}
