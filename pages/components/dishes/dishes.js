@@ -46,6 +46,7 @@ Page({
 					name:"红烧肉",
 					price:38,
 					num:1,
+					pic:"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1595870499427&di=a4bdde7fb0f5e8cb143b4fa56738bdf6&imgtype=0&src=http%3A%2F%2Ft7.baidu.com%2Fit%2Fu%3D1179872664%2C290201490%26fm%3D79%26app%3D86%26f%3DJPEG%3Fw%3D1280%26h%3D854",
 					id:1
 				},
 				{
@@ -91,7 +92,11 @@ Page({
 			],
 			[]
 		],
-		dishes:[]
+		cart: {
+			count: 0,
+			total: 0,
+			list: {}
+		},
 	},
 	loadingChange () {
 		setTimeout(() => {
@@ -110,38 +115,112 @@ Page({
 		})
 	},
 	// 选择菜品
-	selectDish (event) {
-		let dish = event.currentTarget.dataset.dish;
-		let flag = true;
-		let	cart = this.data.cart;
-		
-		if(cart.length > 0){
-			cart.forEach(function(item,index){
-				if(item == dish){
-					cart.splice(index,1);
-					flag = false;
-				}
-			})
-		}
-		if(flag) cart.push(dish);
-		this.setData({
-			cartTotal:cart.length
-		})
-		this.setStatus(dish)
+	tapAddCart: function (e) {
+		console.log(e);
+		this.addCart(e.target.dataset.id);
 	},
-	setStatus (dishId) {
-		let dishes = this.data.dishesList;
-		for (let dish of dishes){
-			dish.forEach((item) => {
-				if(item.id == dishId){
-					item.status = !item.status || false
-				}
-			})
+	tapReduceCart: function (e) {
+		this.reduceCart(e.target.dataset.id);
+	},
+	addCart: function (id) {
+		var num = this.data.cart.list[id] || 0;
+		this.data.cart.list[id] = num + 1;
+		this.countCart();
+	},
+	reduceCart: function (id) {
+		var num = this.data.cart.list[id] || 0;
+		if (num <= 1) {
+			delete this.data.cart.list[id];
+		} else {
+			this.data.cart.list[id] = num - 1;
 		}
-		
+		this.countCart();
+	},
+	countCart: function () {
+		var count = 0,
+			total = 0;
+		for (var id in this.data.cart.list) {
+			var goods = this.data.goods[id];
+			count += this.data.cart.list[id];
+			total += goods.price * this.data.cart.list[id];
+		}
+		this.data.cart.count = count;
+		this.data.cart.total = total;
 		this.setData({
-			dishesList:this.data.dishesList
-		})
+			cart: this.data.cart
+		});
+	},
+	follow: function () {
+		this.setData({
+			followed: !this.data.followed
+		});
+	},
+	onGoodsScroll: function (e) {
+		if (e.detail.scrollTop > 10 && !this.data.scrollDown) {
+			this.setData({
+				scrollDown: true
+			});
+		} else if (e.detail.scrollTop < 10 && this.data.scrollDown) {
+			this.setData({
+				scrollDown: false
+			});
+		}
+
+		var scale = e.detail.scrollWidth / 570,
+			scrollTop = e.detail.scrollTop / scale,
+			h = 0,
+			classifySeleted,
+			len = this.data.goodsList.length;
+		this.data.goodsList.forEach(function (classify, i) {
+			var _h = 70 + classify.goods.length * (46 * 3 + 20 * 2);
+			if (scrollTop >= h - 100 / scale) {
+				classifySeleted = classify.id;
+			}
+			h += _h;
+		});
+		this.setData({
+			classifySeleted: classifySeleted
+		});
+	},
+	tapClassify: function (e) {
+		var id = e.target.dataset.id;
+		this.setData({
+			classifyViewed: id
+		});
+		var self = this;
+		setTimeout(function () {
+			self.setData({
+				classifySeleted: id
+			});
+		}, 100);
+	},
+	showCartDetail: function () {
+		this.setData({
+			showCartDetail: !this.data.showCartDetail
+		});
+	},
+	hideCartDetail: function () {
+		this.setData({
+			showCartDetail: false
+		});
+	},
+	submit: function (e) {
+		server.sendTemplate(e.detail.formId, null, function (res) {
+			if (res.data.errorcode == 0) {
+				wx.showModal({
+					showCancel: false,
+					title: '恭喜',
+					content: '订单发送成功！下订单过程顺利完成，本例不再进行后续订单相关的功能。',
+					success: function(res) {
+						if (res.confirm) {
+							wx.navigateBack();
+						}
+					}
+				})
+			}
+		}, function (res) {
+			console.log(res)
+		});
 	},
 	onLoad () {
 		this.loadingChange()
